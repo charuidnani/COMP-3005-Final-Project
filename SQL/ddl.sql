@@ -18,12 +18,10 @@ CREATE TABLE Trainers (
 );
 
 CREATE TABLE TrainerAvailability (
-    AvailabilityID SERIAL PRIMARY KEY,
+    AvailabilityId SERIAL PRIMARY KEY,
     TrainerId INT,
-    StartTime TIMESTAMP NOT NULL,
-    EndTime TIMESTAMP NOT NULL,
-    FOREIGN KEY (TrainerId) REFERENCES Trainers(TrainerId),
-    CONSTRAINT start_before_end CHECK (StartTime < EndTime)
+    AvailableTime TIMESTAMP,
+    FOREIGN KEY (TrainerId) REFERENCES Trainers(TrainerId)
 );
 
 CREATE TABLE AdminStaff (
