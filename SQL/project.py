@@ -1,7 +1,7 @@
 import psycopg
 import sys
 
-DB_NAME = "final1"
+DB_NAME = "final2"
 USER = "postgres"
 HOST = "localhost"
 PASSWORD = "student"
@@ -71,7 +71,7 @@ def member_login():
                 result = cur.fetchone()
                 if result:
                     print(f"Login successful!\nWelcome, {result[1]}!")
-                    return result[0]  
+                    return result[0]
                 else:
                     print("Invalid login details!")
                     return None
@@ -100,7 +100,6 @@ def admin_login():
 
 
 def schedule_personal_training_session(member_id):
-    print("Please select a trainer:")
     show_available_trainers()
     availability_id = input("Availability ID: ")
 
@@ -133,7 +132,7 @@ def register_for_group_fitness_class(member_id):
                     print("The selected class is full.")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
-        
+
 def sync_wearable_device(member_id):
     device_type = input("Please enter your wearable device type: ")
     workout_time = input("Workout Time (YYYY-MM-DD HH:MM:SS): ")
@@ -179,7 +178,7 @@ def show_available_trainers():
                 for trainer in trainers:
                     print(f"ID: {trainer[0]}, Name: {trainer[1]}, Specialization: {trainer[2]}, Availability ID: {trainer[3]}, Available Time: {trainer[4]}")
     except psycopg.DatabaseError as e:
-        print(f"Error while accessing the database: {e}")s
+        print(f"Error while accessing the database: {e}")
 
 
 def show_available_class_times():
