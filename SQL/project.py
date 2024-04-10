@@ -1,7 +1,7 @@
 import psycopg
 import sys
 
-DB_NAME = "final2"
+DB_NAME = "final1"
 USER = "postgres"
 HOST = "localhost"
 PASSWORD = "student"
@@ -71,7 +71,7 @@ def member_login():
                 result = cur.fetchone()
                 if result:
                     print(f"Login successful!\nWelcome, {result[1]}!")
-                    return result[0]
+                    return result[0]  
                 else:
                     print("Invalid login details!")
                     return None
@@ -100,14 +100,16 @@ def admin_login():
 
 
 def schedule_personal_training_session(member_id):
+    print("Please select a trainer:")
     show_available_trainers()
+    trainer_id = input("Trainer ID: ")
     availability_id = input("Availability ID: ")
 
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("DELETE FROM TrainerAvailability WHERE AvailabilityId = %s RETURNING TrainerId, AvailableTime", (availability_id,))
-                trainer_id, schedule = cur.fetchone()
+                cur.execute("DELETE FROM TrainerAvailability WHERE AvailabilityId = %s RETURNING StartTime", (availability_id,))
+                schedule = cur.fetchone()[0]
                 cur.execute("INSERT INTO PersonalTrainingSession (Schedule, MemberID, TrainerID) VALUES (%s, %s, %s)", (schedule, member_id, trainer_id))
                 conn.commit()
                 print("Session scheduled successfully!")
@@ -172,27 +174,26 @@ def show_available_trainers():
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT t.TrainerID, t.Name, t.Specialization, a.AvailabilityId, a.AvailableTime FROM Trainers t JOIN TrainerAvailability a ON t.TrainerID = a.TrainerId")
+                cur.execute("SELECT t.TrainerID, t.Name, t.Specialization, a.AvailabilityId, a.StartTime, a.EndTime FROM Trainers t JOIN TrainerAvailability a ON t.TrainerID = a.TrainerId")
                 trainers = cur.fetchall()
                 print("\nAvailable Trainers:")
                 for trainer in trainers:
-                    print(f"ID: {trainer[0]}, Name: {trainer[1]}, Specialization: {trainer[2]}, Availability ID: {trainer[3]}, Available Time: {trainer[4]}")
+                    print(f"ID: {trainer[0]}, Name: {trainer[1]}, Specialization: {trainer[2]}, Availability ID: {trainer[3]}, Start Time: {trainer[4]}, End Time: {trainer[5]}")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
-
 
 def show_available_class_times():
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT ClassID, ClassName, Schedule FROM FitnessClasses WHERE CurrentParticipants < MaxParticipants")
+                cur.execute("SELECT ClassID, ClassName, Schedule, MaxParticipants, CurrentParticipants FROM FitnessClasses WHERE CurrentParticipants < MaxParticipants")
                 classes = cur.fetchall()
                 print("\nAvailable Classes:")
                 for class_ in classes:
-                    print(f"ID: {class_[0]}, Name: {class_[1]}, Schedule: {class_[2]}")
+                    print(f"ID: {class_[0]}, Name: {class_[1]}, Schedule: {class_[2]}, Max Participants: {class_[3]}, Current Participants: {class_[4]}")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
-
+        
 def admin_dashboard(staff_id):
     while True:
         print("\nAdmin Dashboard")
