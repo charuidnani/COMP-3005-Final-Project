@@ -1,5 +1,6 @@
 import psycopg
 import sys
+
 DB_NAME = "final1"
 USER = "postgres"
 HOST = "localhost"
@@ -14,6 +15,30 @@ def establish_connection():
         print(f"Failed to connect to the database: {e}")
         exit(1)
     return connection
+
+def show_available_trainers():
+    try:
+        with establish_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT TrainerID, Name, Specialization, Availability FROM Trainers")
+                trainers = cur.fetchall()
+                print("\nAvailable Trainers:")
+                for trainer in trainers:
+                    print(f"ID: {trainer[0]}, Name: {trainer[1]}, Specialization: {trainer[2]}, Availability: {trainer[3]}")
+    except psycopg.DatabaseError as e:
+        print(f"Error while accessing the database: {e}")
+
+def show_available_class_times():
+    try:
+        with establish_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT ClassID, ClassName, Schedule FROM FitnessClasses WHERE CurrentParticipants < MaxParticipants")
+                classes = cur.fetchall()
+                print("\nAvailable Classes:")
+                for class_ in classes:
+                    print(f"ID: {class_[0]}, Name: {class_[1]}, Schedule: {class_[2]}")
+    except psycopg.DatabaseError as e:
+        print(f"Error while accessing the database: {e}")
 
 
 def member_registration():
@@ -35,6 +60,7 @@ def member_registration():
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
+
 def member_login():
     email = input("Please enter your login email: ")
     password = input("Password: ")
@@ -52,6 +78,7 @@ def member_login():
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
         return None
+
 
 def admin_login():
     email = input("Please enter your admin login email: ")
@@ -71,33 +98,46 @@ def admin_login():
         print(f"Error while accessing the database: {e}")
         return None
 
+
 def schedule_personal_training_session(member_id):
     print("Please select a trainer:")
+    show_available_trainers()
     trainer_id = input("Trainer ID: ")
-    schedule = input("Please enter a date and time for the session (YYYY-MM-DD HH:MM:SS): ")
 
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("INSERT INTO PersonalTrainingSession (Schedule, MemberID, TrainerID) VALUES (%s, %s, %s)", (schedule, member_id, trainer_id))
-                conn.commit()
-                print("Session scheduled successfully!")
+                cur.execute("SELECT Availability FROM Trainers WHERE TrainerID = %s", (trainer_id,))
+                availability = cur.fetchone()[0]
+                if availability:
+                    cur.execute("UPDATE Trainers SET Availability = Availability - 1 WHERE TrainerID = %s", (trainer_id,))
+                    cur.execute("INSERT INTO PersonalTrainingSession (Schedule, MemberID, TrainerID) VALUES (%s, %s, %s)", (availability, member_id, trainer_id))
+                    conn.commit()
+                    print("Session scheduled successfully!")
+                else:
+                    print("Selected trainer is not available.")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
 def register_for_group_fitness_class(member_id):
     print("Please select a class:")
+    show_available_class_times()
     class_id = input("Class ID: ")
 
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("UPDATE FitnessClasses SET CurrentParticipants = CurrentParticipants + 1 WHERE ClassID = %s", (class_id,))
-                conn.commit()
-                print("You have successfully registered for the class!")
+                cur.execute("SELECT MaxParticipants, CurrentParticipants FROM FitnessClasses WHERE ClassID = %s", (class_id,))
+                max_participants, current_participants = cur.fetchone()
+                if current_participants < max_participants:
+                    cur.execute("UPDATE FitnessClasses SET CurrentParticipants = CurrentParticipants + 1 WHERE ClassID = %s", (class_id,))
+                    conn.commit()
+                    print("You have successfully registered for the class!")
+                else:
+                    print("The selected class is full.")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
-
+        
 def sync_wearable_device(member_id):
     device_type = input("Please enter your wearable device type: ")
     workout_time = input("Workout Time (YYYY-MM-DD HH:MM:SS): ")
@@ -114,6 +154,7 @@ def sync_wearable_device(member_id):
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
+
 def view_dashboard(member_id):
     try:
         with establish_connection() as conn:
@@ -123,11 +164,93 @@ def view_dashboard(member_id):
                 print("Dashboard Information:")
                 if member_info:
                     print(f"Name: {member_info[0]}\nEmail: {member_info[1]}\nAddress: {member_info[2]}\nPhone Number: {member_info[3]}\nFitness Goals: {member_info[4]}\nHealth Metrics: {member_info[5]}")
-                else:
-                    print("Member information could not be found.")
-
+                cur.execute("SELECT DeviceType, WorkoutTime, HeartRate, ActiveCalories, Steps FROM WearableDevice WHERE MemberID = %s", (member_id,))
+                device_info = cur.fetchall()
+                print("\nWearable Device Data:")
+                for device in device_info:
+                    print(f"Device Type: {device[0]}, Workout Time: {device[1]}, Heart Rate: {device[2]}, Active Calories: {device[3]}, Steps: {device[4]}")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
+
+
+def show_available_trainers():
+    try:
+        with establish_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT TrainerID, Name, Specialization, Availability FROM Trainers")
+                trainers = cur.fetchall()
+                print("\nAvailable Trainers:")
+                for trainer in trainers:
+                    print(f"ID: {trainer[0]}, Name: {trainer[1]}, Specialization: {trainer[2]}, Availability: {trainer[3]}")
+    except psycopg.DatabaseError as e:
+        print(f"Error while accessing the database: {e}")
+
+
+def show_available_class_times():
+    try:
+        with establish_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT ClassID, ClassName, Schedule FROM FitnessClasses WHERE CurrentParticipants < MaxParticipants")
+                classes = cur.fetchall()
+                print("\nAvailable Classes:")
+                for class_ in classes:
+                    print(f"ID: {class_[0]}, Name: {class_[1]}, Schedule: {class_[2]}")
+    except psycopg.DatabaseError as e:
+        print(f"Error while accessing the database: {e}")
+
+def admin_dashboard(staff_id):
+    while True:
+        print("\nAdmin Dashboard")
+        print("1. Room Booking Management")
+        print("2. Equipment Maintenance Monitoring")
+        print("3. Class Schedule Updating")
+        print("4. Billing and Payment Processing")
+        print("5. Logout")
+        choice = input("Please select an option: ")
+
+        if choice == "1":
+            room_booking_management()
+        elif choice == "2":
+            equipment_maintenance_monitoring()
+        elif choice == "3":
+            class_schedule_updating()
+        elif choice == "4":
+            billing_and_payment_processing()
+        elif choice == "5":
+            print("Logging out...")
+            break
+        else:
+            print("Invalid choice, please try again.")
+
+
+def member_dashboard(member_id):
+    while True:
+        print("\nMember Dashboard")
+        print("1. Schedule Personal Training Session")
+        print("2. Register for Group Fitness Class")
+        print("3. Sync Wearable Device")
+        print("4. View Dashboard")
+        print("5. Show Available Trainers")
+        print("6. Show Available Class Times")
+        print("7. Logout")
+        choice = input("Please select an option: ")
+
+        if choice == "1":
+            schedule_personal_training_session(member_id)
+        elif choice == "2":
+            register_for_group_fitness_class(member_id)
+        elif choice == "3":
+            sync_wearable_device(member_id)
+        elif choice == "4":
+            view_dashboard(member_id)
+        elif choice == "5":
+            show_available_trainers()
+        elif choice == "6":
+            show_available_class_times()
+        elif choice == "7":
+            break
+        else:
+            print("Invalid choice, please try again.")
 
 def room_booking_management():
     print("Room Booking Management")
@@ -188,6 +311,7 @@ def billing_and_payment_processing():
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
+
 def main_menu():
     while True:
         print("\nWelcome to the Health and Fitness Club Management System!")
@@ -213,51 +337,6 @@ def main_menu():
         else:
             print("Invalid choice, please try again.")
 
-def member_dashboard(member_id):
-    while True:
-        print("\nMember Dashboard")
-        print("1. Schedule Personal Training Session")
-        print("2. Register for Group Fitness Class")
-        print("3. Sync Wearable Device")
-        print("4. View Dashboard")
-        print("5. Logout")
-        choice = input("Please select an option: ")
-
-        if choice == "1":
-            schedule_personal_training_session(member_id)
-        elif choice == "2":
-            register_for_group_fitness_class(member_id)
-        elif choice == "3":
-            sync_wearable_device(member_id)
-        elif choice == "4":
-            view_dashboard(member_id)
-        elif choice == "5":
-            break
-        else:
-            print("Invalid choice, please try again.")
-
-def admin_dashboard(staff_id):
-    while True:
-        print("\nAdmin Dashboard")
-        print("1. Room Booking Management")
-        print("2. Equipment Maintenance Monitoring")
-        print("3. Class Schedule Updating")
-        print("4. Billing and Payment Processing")
-        print("5. Logout")
-        choice = input("Please select an option: ")
-
-        if choice == "1":
-            room_booking_management()
-        elif choice == "2":
-            equipment_maintenance_monitoring()
-        elif choice == "3":
-            class_schedule_updating()
-        elif choice == "4":
-            billing_and_payment_processing()
-        elif choice == "5":
-            break
-        else:
-            print("Invalid choice, please try again.")
 
 if __name__ == "__main__":
     main_menu()
