@@ -14,7 +14,16 @@ CREATE TABLE Trainers (
     Name VARCHAR(255),
     Email VARCHAR(255) UNIQUE,
     Specialization VARCHAR(255),
-    Availability TIMESTAMP -- Use TIMESTAMP for date and time
+    Selected BOOLEAN
+);
+
+CREATE TABLE TrainerAvailability (
+    AvailabilityID SERIAL PRIMARY KEY,
+    TrainerId INT,
+    StartTime TIMESTAMP NOT NULL,
+    EndTime TIMESTAMP NOT NULL,
+    FOREIGN KEY (TrainerId) REFERENCES Trainers(TrainerId),
+    CONSTRAINT start_before_end CHECK (StartTime < EndTime)
 );
 
 CREATE TABLE AdminStaff (
@@ -27,7 +36,7 @@ CREATE TABLE AdminStaff (
 CREATE TABLE FitnessClasses (
     ClassID SERIAL PRIMARY KEY,
     ClassName VARCHAR(255),
-    Schedule TIMESTAMP, -- Use TIMESTAMP for date and time
+    Schedule TIMESTAMP,
     RoomID INT,
     TrainerID INT,
     MaxParticipants INT,
@@ -37,7 +46,7 @@ CREATE TABLE FitnessClasses (
 
 CREATE TABLE PersonalTrainingSession (
     SessionID SERIAL PRIMARY KEY,
-    Schedule TIMESTAMP, -- Use TIMESTAMP for date and time
+    Schedule TIMESTAMP,
     MemberID INT,
     TrainerID INT,
     FOREIGN KEY (MemberID) REFERENCES Members(MemberID),
@@ -47,7 +56,7 @@ CREATE TABLE PersonalTrainingSession (
 CREATE TABLE RoomBookings (
     BookingID SERIAL PRIMARY KEY,
     RoomID INT,
-    BookingTime TIMESTAMP, -- Use TIMESTAMP for date and time
+    BookingTime TIMESTAMP,
     MemberID INT,
     FOREIGN KEY (MemberID) REFERENCES Members(MemberID)
 );
@@ -78,7 +87,7 @@ CREATE TABLE WearableDevice (
     MemberID INT,
     SessionID INT,
     DeviceType VARCHAR(100),
-    WorkoutTime TIMESTAMP, -- Use TIMESTAMP for date and time
+    WorkoutTime TIMESTAMP,
     HeartRate INT,
     ActiveCalories INT,
     Steps INT,

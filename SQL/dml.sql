@@ -4,11 +4,19 @@ INSERT INTO Members (Name, Email, Password, Address, PhoneNumber, FitnessGoals, 
 ('Robert Brown', 'robert.brown@example.com', 'password789', '789 Pine St, Anytown, USA', '1122334455', 'Improve stamina', 'Normal'),
 ('Emily Davis', 'emily.davis@example.com', 'password012', '012 Oak St, Anytown, USA', '5566778899', 'Increase flexibility', 'Normal');
 
-INSERT INTO Trainers (Name, Email, Specialization, Availability) VALUES
-('Tom Johnson', 'tom.johnson@example.com', 'Weightlifting', '2022-12-01 09:00:00'),
-('Sally Peterson', 'sally.peterson@example.com', 'Cardio', '2022-12-01 14:00:00'),
-('Bill Thompson', 'bill.thompson@example.com', 'Yoga', '2022-12-01 10:00:00'),
-('Linda Anderson', 'linda.anderson@example.com', 'Pilates', '2022-12-01 15:00:00');
+INSERT INTO Trainers (Name, Email, Specialization, Selected) VALUES
+('Tom Johnson', 'tom.johnson@example.com', 'Weightlifting', FALSE),
+('Sally Peterson', 'sally.peterson@example.com', 'Cardio', FALSE),
+('Bill Thompson', 'bill.thompson@example.com', 'Yoga', FALSE),
+('Linda Anderson', 'linda.anderson@example.com', 'Pilates', FALSE);
+
+INSERT INTO TrainerAvailability (TrainerId, StartTime, EndTime) VALUES
+(1, '2024-04-11 08:00:00', '2024-04-11 12:00:00'),
+(1, '2024-04-12 14:00:00', '2024-04-12 18:00:00'),
+(2, '2024-04-11 09:00:00', '2024-04-11 13:00:00'),
+(3, '2024-04-12 10:00:00', '2024-04-12 14:00:00'),
+(4, '2024-04-11 15:00:00', '2024-04-11 19:00:00');
+
 
 INSERT INTO AdminStaff (Name, Email, Role) VALUES
 ('George Wilson', 'george.wilson@example.com', 'Manager'),
@@ -17,16 +25,16 @@ INSERT INTO AdminStaff (Name, Email, Role) VALUES
 ('Karen Davis', 'karen.davis@example.com', 'Billing');
 
 INSERT INTO FitnessClasses (ClassName, Schedule, RoomID, TrainerID, MaxParticipants, CurrentParticipants) VALUES
-('Yoga', '2022-12-02 10:00:00', 1, 3, 20, 10),
-('Zumba', '2022-12-02 15:00:00', 2, 2, 20, 15),
-('Weightlifting', '2022-12-02 09:00:00', 3, 1, 20, 12),
-('Pilates', '2022-12-02 16:00:00', 4, 4, 20, 14);
+('Yoga', '2024-04-11 10:00:00', 1, 3, 20, 10),
+('Zumba', '2024-04-11 15:00:00', 2, 2, 20, 15),
+('Weightlifting', '2024-04-10 09:00:00', 3, 1, 20, 12),
+('Pilates', '2024-04-11 16:00:00', 4, 4, 20, 14);
 
 INSERT INTO PersonalTrainingSession (Schedule, MemberID, TrainerID) VALUES
-('2022-12-03 11:00:00', 1, 1),
-('2022-12-03 16:00:00', 2, 2),
-('2022-12-03 10:00:00', 3, 3),
-('2022-12-03 15:00:00', 4, 4);
+('2024-04-12 11:00:00', 1, 1),
+('2024-04-12 16:00:00', 2, 2),
+('2024-04-12 10:00:00', 3, 3),
+('2024-04-12 15:00:00', 4, 4);
 
 INSERT INTO RoomBookings (RoomID, BookingTime, MemberID) VALUES
 (1, '2022-12-04 12:00:00', 1),
