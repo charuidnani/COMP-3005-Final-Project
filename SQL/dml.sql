@@ -10,12 +10,12 @@ INSERT INTO Trainers (Name, Email, Specialization, Selected) VALUES
 ('Bill Thompson', 'bill.thompson@example.com', 'Yoga', FALSE),
 ('Linda Anderson', 'linda.anderson@example.com', 'Pilates', FALSE);
 
-INSERT INTO TrainerAvailability (TrainerId, StartTime, EndTime) VALUES
-(1, '2024-04-11 08:00:00', '2024-04-11 12:00:00'),
-(1, '2024-04-12 14:00:00', '2024-04-12 18:00:00'),
-(2, '2024-04-11 09:00:00', '2024-04-11 13:00:00'),
-(3, '2024-04-12 10:00:00', '2024-04-12 14:00:00'),
-(4, '2024-04-11 15:00:00', '2024-04-11 19:00:00');
+INSERT INTO TrainerAvailability (TrainerId, AvailableTime) VALUES
+(1, '2024-04-11 08:00:00'),
+(1, '2024-04-12 14:00:00'),
+(2, '2024-04-11 09:00:00'),
+(3, '2024-04-12 10:00:00'),
+(4, '2024-04-11 15:00:00');
 
 
 INSERT INTO AdminStaff (Name, Email, Role) VALUES
