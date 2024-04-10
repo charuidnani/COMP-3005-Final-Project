@@ -102,20 +102,16 @@ def admin_login():
 def schedule_personal_training_session(member_id):
     print("Please select a trainer:")
     show_available_trainers()
-    trainer_id = input("Trainer ID: ")
+    availability_id = input("Availability ID: ")
 
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT Availability FROM Trainers WHERE TrainerID = %s", (trainer_id,))
-                availability = cur.fetchone()[0]
-                if availability:
-                    cur.execute("UPDATE Trainers SET Availability = Availability - 1 WHERE TrainerID = %s", (trainer_id,))
-                    cur.execute("INSERT INTO PersonalTrainingSession (Schedule, MemberID, TrainerID) VALUES (%s, %s, %s)", (availability, member_id, trainer_id))
-                    conn.commit()
-                    print("Session scheduled successfully!")
-                else:
-                    print("Selected trainer is not available.")
+                cur.execute("DELETE FROM TrainerAvailability WHERE AvailabilityId = %s RETURNING TrainerId, AvailableTime", (availability_id,))
+                trainer_id, schedule = cur.fetchone()
+                cur.execute("INSERT INTO PersonalTrainingSession (Schedule, MemberID, TrainerID) VALUES (%s, %s, %s)", (schedule, member_id, trainer_id))
+                conn.commit()
+                print("Session scheduled successfully!")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
@@ -177,13 +173,13 @@ def show_available_trainers():
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT TrainerID, Name, Specialization, Availability FROM Trainers")
+                cur.execute("SELECT t.TrainerID, t.Name, t.Specialization, a.AvailabilityId, a.AvailableTime FROM Trainers t JOIN TrainerAvailability a ON t.TrainerID = a.TrainerId")
                 trainers = cur.fetchall()
                 print("\nAvailable Trainers:")
                 for trainer in trainers:
-                    print(f"ID: {trainer[0]}, Name: {trainer[1]}, Specialization: {trainer[2]}, Availability: {trainer[3]}")
+                    print(f"ID: {trainer[0]}, Name: {trainer[1]}, Specialization: {trainer[2]}, Availability ID: {trainer[3]}, Available Time: {trainer[4]}")
     except psycopg.DatabaseError as e:
-        print(f"Error while accessing the database: {e}")
+        print(f"Error while accessing the database: {e}")s
 
 
 def show_available_class_times():
