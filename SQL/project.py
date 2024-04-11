@@ -71,7 +71,7 @@ def member_login():
                 result = cur.fetchone()
                 if result:
                     print(f"Login successful!\nWelcome, {result[1]}!")
-                    return result[0]  
+                    return result[0]
                 else:
                     print("Invalid login details!")
                     return None
@@ -82,11 +82,10 @@ def member_login():
 
 def admin_login():
     email = input("Please enter your admin login email: ")
-    password = input("Password: ")
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT StaffID, Name FROM AdminStaff WHERE Email = %s AND Password = %s", (email, password))
+                cur.execute("SELECT StaffID, Name FROM AdminStaff WHERE Email = %s", (email,))
                 result = cur.fetchone()
                 if result:
                     print(f"Admin Login successful!\nWelcome, {result[1]}!")
@@ -193,7 +192,7 @@ def show_available_class_times():
                     print(f"ID: {class_[0]}, Name: {class_[1]}, Schedule: {class_[2]}, Max Participants: {class_[3]}, Current Participants: {class_[4]}")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
-        
+
 def admin_dashboard(staff_id):
     while True:
         print("\nAdmin Dashboard")
