@@ -104,3 +104,19 @@ CREATE TABLE WearableDevice (
     FOREIGN KEY (MemberID) REFERENCES Members(MemberID),
     FOREIGN KEY (SessionID) REFERENCES PersonalTrainingSession(SessionID)
 );
+
+CREATE TABLE ExerciseRoutines (
+    RoutineID SERIAL PRIMARY KEY,
+    MemberID INT,
+    RoutineName VARCHAR(255),
+    RoutineDetails TEXT,
+    FOREIGN KEY (MemberID) REFERENCES Members(MemberID)
+);
+
+CREATE TABLE FitnessAchievements (
+    AchievementID SERIAL PRIMARY KEY,
+    MemberID INT,
+    AchievementName VARCHAR(255),
+    AchievementDetails TEXT,
+    FOREIGN KEY (MemberID) REFERENCES Members(MemberID)
+);
