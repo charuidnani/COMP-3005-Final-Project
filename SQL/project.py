@@ -1,7 +1,7 @@
 import psycopg
 import sys
 
-DB_NAME = "final1"
+DB_NAME = "final4"
 USER = "postgres"
 HOST = "localhost"
 PASSWORD = "student"
@@ -97,6 +97,38 @@ def admin_login():
         print(f"Error while accessing the database: {e}")
         return None
 
+def add_available_room_admin():
+    room_id = input("Enter Room ID: ")
+    room_name = input("Enter Room Name: ")
+    max_capacity = input("Enter Maximum Capacity: ")
+
+    try:
+        with establish_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("INSERT INTO Rooms (RoomID, RoomName, RoomCapacity) VALUES (%s, %s, %s)", (room_id, room_name, max_capacity))
+                conn.commit()
+                print("Room added successfully!")
+    except psycopg.DatabaseError as e:
+        print(f"Error while accessing the database: {e}")
+
+def show_available_rooms():
+    try:
+        with establish_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT r.RoomID, r.RoomName, r.RoomCapacity, t.Name AS TrainerName, t.Specialization, rb.BookingTime
+                    FROM Rooms r
+                    LEFT JOIN RoomBookings rb ON r.RoomID = rb.RoomID
+                    LEFT JOIN Trainers t ON rb.TrainerID = t.TrainerID
+                    ORDER BY r.RoomID
+                """)
+                rooms = cur.fetchall()
+                print("\nRooms and Bookings:")
+                for room in rooms:
+                    print(f"Room ID: {room[0]}, Room Name: {room[1]}, Capacity: {room[2]}, Trainer: {room[3]}, Specialization: {room[4]}, Booking Time: {room[5]}")
+    except psycopg.DatabaseError as e:
+        print(f"Error while accessing the database: {e}")
+
 
 def schedule_personal_training_session(member_id):
     print("Please select a trainer:")
@@ -110,6 +142,9 @@ def schedule_personal_training_session(member_id):
                 cur.execute("DELETE FROM TrainerAvailability WHERE AvailabilityId = %s RETURNING StartTime", (availability_id,))
                 schedule = cur.fetchone()[0]
                 cur.execute("INSERT INTO PersonalTrainingSession (Schedule, MemberID, TrainerID) VALUES (%s, %s, %s)", (schedule, member_id, trainer_id))
+
+                cur.execute("UPDATE FitnessClasses SET TrainerID = %s, BookedByTrainer = TRUE WHERE Schedule = %s", (trainer_id, schedule))
+
                 conn.commit()
                 print("Session scheduled successfully!")
     except psycopg.DatabaseError as e:
@@ -185,7 +220,7 @@ def show_available_class_times():
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT ClassID, ClassName, Schedule, MaxParticipants, CurrentParticipants FROM FitnessClasses WHERE CurrentParticipants < MaxParticipants")
+                cur.execute("SELECT ClassID, ClassName, Schedule, MaxParticipants, CurrentParticipants, TrainerID FROM FitnessClasses WHERE CurrentParticipants < MaxParticipants AND (TrainerID IS NULL OR BookedByTrainer = FALSE)")
                 classes = cur.fetchall()
                 print("\nAvailable Classes:")
                 for class_ in classes:
@@ -200,7 +235,8 @@ def admin_dashboard(staff_id):
         print("2. Equipment Maintenance Monitoring")
         print("3. Class Schedule Updating")
         print("4. Billing and Payment Processing")
-        print("5. Logout")
+        print("5. Add Available Room")
+        print("6. Logout")
         choice = input("Please select an option: ")
 
         if choice == "1":
@@ -212,10 +248,13 @@ def admin_dashboard(staff_id):
         elif choice == "4":
             billing_and_payment_processing()
         elif choice == "5":
+            add_available_room_admin()
+        elif choice == "6":
             print("Logging out...")
             break
         else:
             print("Invalid choice, please try again.")
+
 
 
 def member_dashboard(member_id):
@@ -247,22 +286,40 @@ def member_dashboard(member_id):
         else:
             print("Invalid choice, please try again.")
 
+
 def room_booking_management():
-    print("Room Booking Management")
-    member_id = input("Enter Member ID: ")
+    show_available_rooms()
+
     room_id = input("Enter Room ID: ")
-    booking_time = input("Enter Booking Time (YYYY-MM-DD HH:MM:SS): ")
+
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("INSERT INTO RoomBookings (RoomID, BookingTime, MemberID) VALUES (%s, %s, %s)", (room_id, booking_time, member_id))
+                # Check if the room is available
+                cur.execute("SELECT BookingTime FROM RoomBookings WHERE RoomID = %s", (room_id,))
+                existing_bookings = cur.fetchall()
+                if existing_bookings:
+                    print("The room is already booked at the following times:")
+                    for booking in existing_bookings:
+                        print(booking[0])
+                    return
+
+                # If the room is available, proceed with booking
+                trainer_id = input("Enter Trainer ID: ")
+                booking_time = input("Enter Booking Time (YYYY-MM-DD HH:MM:SS): ")
+                booking_reason = input("Enter Booking Reason: ")
+
+                # Insert booking into RoomBookings table
+                cur.execute("INSERT INTO RoomBookings (RoomID, BookingTime, TrainerID, BookingReason) VALUES (%s, %s, %s, %s)", (room_id, booking_time, trainer_id, booking_reason))
                 conn.commit()
                 print("Room booking successful!")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
+
+
+
 def equipment_maintenance_monitoring():
-    print("Equipment Maintenance Monitoring")
     equipment_name = input("Enter Equipment Name: ")
     last_check = input("Enter Last Check Date (YYYY-MM-DD): ")
     current_check = input("Enter Current Check Date (YYYY-MM-DD): ")

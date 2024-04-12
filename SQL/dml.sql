@@ -1,3 +1,9 @@
+INSERT INTO Rooms (RoomID, RoomName, RoomCapacity) VALUES
+(1, 'Room A', 10),
+(2, 'Room B', 15),
+(3, 'Room C', 20),
+(4, 'Room D', 12);
+
 INSERT INTO Members (Name, Email, Password, Address, PhoneNumber, FitnessGoals, HealthMetrics) VALUES
 ('John Doe', 'john.doe@example.com', 'password123', '123 Main St, Anytown, USA', '1234567890', 'Lose weight', 'Normal'),
 ('Jane Smith', 'jane.smith@example.com', 'password456', '456 Elm St, Anytown, USA', '0987654321', 'Gain muscle', 'Normal'),
@@ -25,8 +31,8 @@ INSERT INTO AdminStaff (Name, Email, Role) VALUES
 ('Karen Davis', 'karen.davis@example.com', 'Billing');
 
 INSERT INTO FitnessClasses (ClassName, Schedule, RoomID, TrainerID, MaxParticipants, CurrentParticipants) VALUES
-('Yoga', '2024-04-11 10:00:00', 1, 3, 20, 10),
-('Zumba', '2024-04-11 15:00:00', 2, 2, 20, 15),
+('Yoga', '2024-04-11 10:00:00', 1, NULL, 20, 10),
+('Zumba', '2024-04-11 15:00:00', 2, NULL, 20, 15),
 ('Weightlifting', '2024-04-10 09:00:00', 3, 1, 20, 12),
 ('Pilates', '2024-04-11 16:00:00', 4, 4, 20, 14);
 
@@ -36,11 +42,15 @@ INSERT INTO PersonalTrainingSession (Schedule, MemberID, TrainerID) VALUES
 ('2024-04-12 10:00:00', 3, 3),
 ('2024-04-12 15:00:00', 4, 4);
 
-INSERT INTO RoomBookings (RoomID, BookingTime, MemberID) VALUES
-(1, '2022-12-04 12:00:00', 1),
-(2, '2022-12-04 17:00:00', 2),
-(3, '2022-12-04 11:00:00', 3),
-(4, '2022-12-04 16:00:00', 4);
+
+
+
+INSERT INTO RoomBookings (RoomID, BookingTime, TrainerID, BookingReason) VALUES
+(1, '2024-04-11 12:00:00', 1, 'Weightlifting Session'),
+(2, '2024-04-11 17:00:00', 2, 'Cardio Training'),
+(3, '2024-04-12 11:00:00', 3, 'Yoga Class'),
+(4, '2024-04-12 16:00:00', 4, 'Pilates Class');
+
 
 INSERT INTO EquipmentMaintenance (EquipmentName, LastCheck, CurrentCheck, Status, StaffID) VALUES
 ('Treadmill', '2022-11-01', '2022-12-01', 'Good', 3),
@@ -60,3 +70,31 @@ INSERT INTO WearableDevice (MemberID, SessionID, DeviceType, WorkoutTime, HeartR
 (3, 3, 'Smart Watch', '2022-12-05 12:00:00', 85, 250, 5500),
 (4, 4, 'Fitness Tracker', '2022-12-05 17:00:00', 95, 350, 7500);
 
+CREATE OR REPLACE FUNCTION check_room_booking() RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM RoomBookings WHERE RoomID = NEW.RoomID AND BookingTime = NEW.BookingTime) THEN
+        RAISE EXCEPTION 'Room is already booked at the specified time.';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER room_booking_trigger
+BEFORE INSERT ON RoomBookings
+FOR EACH ROW EXECUTE FUNCTION check_room_booking();
+
+CREATE OR REPLACE FUNCTION update_trainer_id()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.BookedByTrainer THEN
+        NEW.TrainerID = (SELECT TrainerID FROM TrainerAvailability WHERE StartTime <= NEW.Schedule AND EndTime > NEW.Schedule LIMIT 1);
+    ELSE
+        NEW.TrainerID = NULL;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_trainer_id_trigger
+BEFORE INSERT OR UPDATE ON FitnessClasses
+FOR EACH ROW EXECUTE FUNCTION update_trainer_id();
