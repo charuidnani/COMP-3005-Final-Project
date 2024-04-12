@@ -1,5 +1,6 @@
 import psycopg
 import sys
+from datetime import date
 
 DB_NAME = "final4"
 USER = "postgres"
@@ -317,22 +318,42 @@ def room_booking_management():
         print(f"Error while accessing the database: {e}")
 
 
-
-
-def equipment_maintenance_monitoring():
-    equipment_name = input("Enter Equipment Name: ")
-    last_check = input("Enter Last Check Date (YYYY-MM-DD): ")
-    current_check = input("Enter Current Check Date (YYYY-MM-DD): ")
-    status = input("Enter Status: ")
-    staff_id = input("Enter Staff ID: ")
+def list_equipment():
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("INSERT INTO EquipmentMaintenance (EquipmentName, LastCheck, CurrentCheck, Status, StaffID) VALUES (%s, %s, %s, %s, %s)", (equipment_name, last_check, current_check, status, staff_id))
-                conn.commit()
-                print("Equipment maintenance record updated successfully!")
+                cur.execute("SELECT EquipmentID, EquipmentName, LastCheck, CurrentCheck, Status FROM EquipmentMaintenance")
+                equipments = cur.fetchall()
+                print("\nEquipment List:")
+                for equipment in equipments:
+                    print(f"ID: {equipment[0]}, Name: {equipment[1]}, Last Check: {equipment[2]}, Current Check: {equipment[3]}, Status: {equipment[4]}")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
+
+def update_equipment_status():
+    list_equipment()
+    equipment_id = input("Enter Equipment ID to update: ")
+    new_status = input("Enter new status: ")
+    today = date.today()
+
+    try:
+        with establish_connection() as conn:
+            with conn.cursor() as cur:
+                # Update the current check to today's date and status as per the input
+                cur.execute("UPDATE EquipmentMaintenance SET CurrentCheck = %s, Status = %s WHERE EquipmentID = %s", (today, new_status, equipment_id))
+                conn.commit()
+                print("Equipment status updated successfully!")
+    except psycopg.DatabaseError as e:
+        print(f"Error while accessing the database: {e}")
+
+def equipment_maintenance_monitoring():
+    print("Equipment Maintenance Monitoring")
+    update_option = input("Do you want to update equipment status? (yes/no): ")
+
+    if update_option.lower() == 'yes':
+        update_equipment_status()
+    else:
+        print("No updates made.")
 
 def class_schedule_updating():
     print("Class Schedule Updating")
@@ -347,21 +368,37 @@ def class_schedule_updating():
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
+
+def list_billing_information():
+    try:
+        with establish_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT BillID, MemberID, StaffID, Amount, BillDate, Status FROM Billing ORDER BY BillID")
+                billing_records = cur.fetchall()
+                print("\nBilling Information:")
+                for record in billing_records:
+                    print(f"Bill ID: {record[0]}, Member ID: {record[1]}, Staff ID: {record[2]}, Amount: {record[3]}, Bill Date: {record[4]}, Status: {record[5]}")
+    except psycopg.DatabaseError as e:
+        print(f"Error while accessing the database: {e}")
+
+
 def billing_and_payment_processing():
-    print("Billing and Payment Processing")
-    member_id = input("Enter Member ID: ")
-    amount = input("Enter Amount: ")
-    bill_date = input("Enter Bill Date (YYYY-MM-DD): ")
-    status = input("Enter Status (Paid/Unpaid): ")
+    list_billing_information()
+    member_id = input("Enter Member ID for billing: ")
+    amount = input("Enter Amount to be billed: ")
+    bill_date = date.today().strftime("%Y-%m-%d")
+    status = input("Enter Billing Status (Paid/Unpaid): ")
     staff_id = input("Enter Staff ID handling the billing: ")
+
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("INSERT INTO Billing (MemberID, StaffID, Amount, BillDate, Status) VALUES (%s, %s, %s, %s, %s)", (member_id, staff_id, amount, bill_date, status))
                 conn.commit()
-                print("Billing information updated successfully!")
+                print("Billing information updated successfully with today's date as the bill date.")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
+
 
 
 def main_menu():
