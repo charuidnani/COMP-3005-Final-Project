@@ -14,18 +14,18 @@ def establish_connection():
         )
     except psycopg.OperationalError as e:
         print(f"Failed to connect to the database: {e}")
-        exit(1)
+        sys.exit(1)
     return connection
 
 def show_available_trainers():
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT TrainerID, Name, Specialization, Availability FROM Trainers")
+                cur.execute("SELECT t.TrainerID, t.Name, t.Specialization, a.AvailabilityId, a.AvailableTime FROM Trainers t JOIN TrainerAvailability a ON t.TrainerID = a.TrainerId")
                 trainers = cur.fetchall()
                 print("\nAvailable Trainers:")
                 for trainer in trainers:
-                    print(f"ID: {trainer[0]}, Name: {trainer[1]}, Specialization: {trainer[2]}, Availability: {trainer[3]}")
+                    print(f"ID: {trainer[0]}, Name: {trainer[1]}, Specialization: {trainer[2]}, Availability ID: {trainer[3]}, Available Time: {trainer[4]}")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
@@ -33,14 +33,13 @@ def show_available_class_times():
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT ClassID, ClassName, Schedule FROM FitnessClasses WHERE CurrentParticipants < MaxParticipants")
+                cur.execute("SELECT ClassID, ClassName, Schedule, MaxParticipants, CurrentParticipants, TrainerID FROM FitnessClasses WHERE CurrentParticipants < MaxParticipants AND (TrainerID IS NULL OR BookedByTrainer = FALSE)")
                 classes = cur.fetchall()
                 print("\nAvailable Classes:")
                 for class_ in classes:
-                    print(f"ID: {class_[0]}, Name: {class_[1]}, Schedule: {class_[2]}")
+                    print(f"ID: {class_[0]}, Name: {class_[1]}, Schedule: {class_[2]}, Max Participants: {class_[3]}, Current Participants: {class_[4]}")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
-
 
 def member_registration():
     """Handles member registration."""
@@ -61,6 +60,47 @@ def member_registration():
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
+def update_member_profile(member_id):
+    name = input("Please enter your updated name: ")
+    email = input("Updated Email: ")
+    password = input("Updated Password: ")
+    address = input("Updated Address: ")
+    phone_number = input("Updated Phone Number: ")
+    fitness_goals = input("Updated Fitness Goals: ")
+    health_metrics = input("Updated Health Metrics: ")
+
+    try:
+        with establish_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("UPDATE Members SET Name = %s, Email = %s, Password = %s, Address = %s, PhoneNumber = %s, FitnessGoals = %s, HealthMetrics = %s WHERE MemberID = %s", (name, email, password, address, phone_number, fitness_goals, health_metrics, member_id))
+                conn.commit()
+                print("Profile updated successfully!")
+    except psycopg.DatabaseError as e:
+        print(f"Error while accessing the database: {e}")
+
+def display_exercise_routines(member_id):
+    try:
+        with establish_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM ExerciseRoutines WHERE MemberID = %s", (member_id,))
+                routines = cur.fetchall()
+                print("Exercise Routines:")
+                for routine in routines:
+                    print(routine)
+    except psycopg.DatabaseError as e:
+        print(f"Error while accessing the database: {e}")
+
+def display_fitness_achievements(member_id):
+    try:
+        with establish_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM FitnessAchievements WHERE MemberID = %s", (member_id,))
+                achievements = cur.fetchall()
+                print("Fitness Achievements:")
+                for achievement in achievements:
+                    print(achievement)
+    except psycopg.DatabaseError as e:
+                print(f"Error while accessing the database: {e}")
 
 def member_login():
     email = input("Please enter your login email: ")
@@ -130,7 +170,6 @@ def show_available_rooms():
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
-
 def schedule_personal_training_session(member_id):
     print("Please select a trainer:")
     show_available_trainers()
@@ -140,7 +179,7 @@ def schedule_personal_training_session(member_id):
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("DELETE FROM TrainerAvailability WHERE AvailabilityId = %s RETURNING StartTime", (availability_id,))
+                cur.execute("DELETE FROM TrainerAvailability WHERE AvailabilityId = %s RETURNING AvailableTime", (availability_id,))
                 schedule = cur.fetchone()[0]
                 cur.execute("INSERT INTO PersonalTrainingSession (Schedule, MemberID, TrainerID) VALUES (%s, %s, %s)", (schedule, member_id, trainer_id))
 
@@ -186,7 +225,6 @@ def sync_wearable_device(member_id):
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
-
 def view_dashboard(member_id):
     try:
         with establish_connection() as conn:
@@ -204,16 +242,15 @@ def view_dashboard(member_id):
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
-
 def show_available_trainers():
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT t.TrainerID, t.Name, t.Specialization, a.AvailabilityId, a.StartTime, a.EndTime FROM Trainers t JOIN TrainerAvailability a ON t.TrainerID = a.TrainerId")
+                cur.execute("SELECT t.TrainerID, t.Name, t.Specialization, a.AvailabilityId, a.AvailableTime FROM Trainers t JOIN TrainerAvailability a ON t.TrainerID = a.TrainerId")
                 trainers = cur.fetchall()
                 print("\nAvailable Trainers:")
                 for trainer in trainers:
-                    print(f"ID: {trainer[0]}, Name: {trainer[1]}, Specialization: {trainer[2]}, Availability ID: {trainer[3]}, Start Time: {trainer[4]}, End Time: {trainer[5]}")
+                    print(f"ID: {trainer[0]}, Name: {trainer[1]}, Specialization: {trainer[2]}, Availability ID: {trainer[3]}, Available Time: {trainer[4]}")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
@@ -256,8 +293,6 @@ def admin_dashboard(staff_id):
         else:
             print("Invalid choice, please try again.")
 
-
-
 def member_dashboard(member_id):
     while True:
         print("\nMember Dashboard")
@@ -267,7 +302,10 @@ def member_dashboard(member_id):
         print("4. View Dashboard")
         print("5. Show Available Trainers")
         print("6. Show Available Class Times")
-        print("7. Logout")
+        print("7. Update Profile")
+        print("8. Display Exercise Routines")
+        print("9. Display Fitness Achievements")
+        print("10. Logout")
         choice = input("Please select an option: ")
 
         if choice == "1":
@@ -283,14 +321,18 @@ def member_dashboard(member_id):
         elif choice == "6":
             show_available_class_times()
         elif choice == "7":
+            update_member_profile(member_id)
+        elif choice == "8":
+            display_exercise_routines(member_id)
+        elif choice == "9":
+            display_fitness_achievements(member_id)
+        elif choice == "10":
             break
         else:
             print("Invalid choice, please try again.")
 
-
 def room_booking_management():
     show_available_rooms()
-
     room_id = input("Enter Room ID: ")
 
     try:
@@ -316,7 +358,6 @@ def room_booking_management():
                 print("Room booking successful!")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
-
 
 def list_equipment():
     try:
@@ -368,7 +409,6 @@ def class_schedule_updating():
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
-
 def list_billing_information():
     try:
         with establish_connection() as conn:
@@ -381,25 +421,19 @@ def list_billing_information():
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
 
-
 def billing_and_payment_processing():
     list_billing_information()
-    member_id = input("Enter Member ID for billing: ")
-    amount = input("Enter Amount to be billed: ")
-    bill_date = date.today().strftime("%Y-%m-%d")
-    status = input("Enter Billing Status (Paid/Unpaid): ")
-    staff_id = input("Enter Staff ID handling the billing: ")
+    bill_id = input("Enter Bill ID to update: ")
+    new_status = input("Enter new status (Paid/Unpaid): ")
 
     try:
         with establish_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("INSERT INTO Billing (MemberID, StaffID, Amount, BillDate, Status) VALUES (%s, %s, %s, %s, %s)", (member_id, staff_id, amount, bill_date, status))
+                cur.execute("UPDATE Billing SET Status = %s WHERE BillID = %s", (new_status, bill_id))
                 conn.commit()
-                print("Billing information updated successfully with today's date as the bill date.")
+                print("Bill status updated successfully!")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
-
-
 
 def main_menu():
     while True:
@@ -425,7 +459,6 @@ def main_menu():
             break
         else:
             print("Invalid choice, please try again.")
-
 
 if __name__ == "__main__":
     main_menu()
