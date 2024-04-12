@@ -70,6 +70,18 @@ INSERT INTO WearableDevice (MemberID, SessionID, DeviceType, WorkoutTime, HeartR
 (3, 3, 'Smart Watch', '2022-12-05 12:00:00', 85, 250, 5500),
 (4, 4, 'Fitness Tracker', '2022-12-05 17:00:00', 95, 350, 7500);
 
+INSERT INTO ExerciseRoutines (MemberID, RoutineName, RoutineDetails) VALUES
+(1, 'Morning Cardio', '30 minutes of running'),
+(2, 'Evening Yoga', '20 minutes of yoga'),
+(3, 'Afternoon Weights', '45 minutes of weightlifting'),
+(4, 'Night Pilates', '30 minutes of pilates');
+
+INSERT INTO FitnessAchievements (MemberID, AchievementName, AchievementDetails) VALUES
+(1, '5k Run', 'Completed a 5k run'),
+(2, '10k Steps', 'Walked 10k steps in a day'),
+(3, '1 Hour Yoga', 'Did 1 hour of yoga'),
+(4, 'Lifted 50kg', 'Lifted 50kg weights');
+
 CREATE OR REPLACE FUNCTION check_room_booking() RETURNS TRIGGER AS $$
 BEGIN
     IF EXISTS (SELECT 1 FROM RoomBookings WHERE RoomID = NEW.RoomID AND BookingTime = NEW.BookingTime) THEN
