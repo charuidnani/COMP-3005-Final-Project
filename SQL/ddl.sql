@@ -13,6 +13,7 @@ CREATE TABLE Trainers (
     TrainerId SERIAL PRIMARY KEY,
     Name VARCHAR(255),
     Email VARCHAR(255) UNIQUE,
+    Password VARCHAR(255),
     Specialization VARCHAR(255),
     Selected BOOLEAN
 );
@@ -34,6 +35,7 @@ CREATE TABLE AdminStaff (
     StaffID SERIAL PRIMARY KEY,
     Name VARCHAR(255),
     Email VARCHAR(255) UNIQUE,
+    Password VARCHAR(255),
     Role VARCHAR(255)
 );
 
@@ -120,3 +122,4 @@ CREATE TABLE FitnessAchievements (
     AchievementDetails TEXT,
     FOREIGN KEY (MemberID) REFERENCES Members(MemberID)
 );
+
