@@ -10,11 +10,11 @@ INSERT INTO Members (Name, Email, Password, Address, PhoneNumber, FitnessGoals, 
 ('Robert Brown', 'robert.brown@example.com', 'password789', '789 Pine St, Anytown, USA', '1122334455', 'Improve stamina', 'Normal'),
 ('Emily Davis', 'emily.davis@example.com', 'password012', '012 Oak St, Anytown, USA', '5566778899', 'Increase flexibility', 'Normal');
 
-INSERT INTO Trainers (Name, Email, Specialization, Selected) VALUES
-('Tom Johnson', 'tom.johnson@example.com', 'Weightlifting', FALSE),
-('Sally Peterson', 'sally.peterson@example.com', 'Cardio', FALSE),
-('Bill Thompson', 'bill.thompson@example.com', 'Yoga', FALSE),
-('Linda Anderson', 'linda.anderson@example.com', 'Pilates', FALSE);
+INSERT INTO Trainers (Name, Email, Password, Specialization, Selected) VALUES
+('Tom Johnson', 'tom.johnson@example.com', 'password123', 'Weightlifting', FALSE),
+('Sally Peterson', 'sally.peterson@example.com', 'password456', 'Cardio', FALSE),
+('Bill Thompson', 'bill.thompson@example.com', 'password789', 'Yoga', FALSE),
+('Linda Anderson', 'linda.anderson@example.com', 'password012', 'Pilates', FALSE);
 
 INSERT INTO TrainerAvailability (TrainerId, AvailableTime) VALUES
 (1, '2024-04-11 08:00:00'),
@@ -23,12 +23,11 @@ INSERT INTO TrainerAvailability (TrainerId, AvailableTime) VALUES
 (3, '2024-04-12 10:00:00'),
 (4, '2024-04-11 15:00:00');
 
-
-INSERT INTO AdminStaff (Name, Email, Role) VALUES
-('George Wilson', 'george.wilson@example.com', 'Manager'),
-('Susan Miller', 'susan.miller@example.com', 'Receptionist'),
-('Fred Taylor', 'fred.taylor@example.com', 'Maintenance'),
-('Karen Davis', 'karen.davis@example.com', 'Billing');
+INSERT INTO AdminStaff (Name, Email, Password, Role) VALUES
+('George Wilson', 'george.wilson@example.com', 'password123', 'Manager'),
+('Susan Miller', 'susan.miller@example.com', 'password456', 'Receptionist'),
+('Fred Taylor', 'fred.taylor@example.com', 'password789', 'Maintenance'),
+('Karen Davis', 'karen.davis@example.com', 'password012', 'Billing');
 
 INSERT INTO FitnessClasses (ClassName, Schedule, RoomID, TrainerID, MaxParticipants, CurrentParticipants) VALUES
 ('Yoga', '2024-04-11 10:00:00', 1, NULL, 20, 10),
@@ -110,3 +109,4 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER update_trainer_id_trigger
 BEFORE INSERT OR UPDATE ON FitnessClasses
 FOR EACH ROW EXECUTE FUNCTION update_trainer_id();
+
