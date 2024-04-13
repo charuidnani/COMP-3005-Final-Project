@@ -2,7 +2,7 @@ import psycopg
 import sys
 from datetime import date
 
-DB_NAME = "final4"
+DB_NAME = "finalproject"
 USER = "postgres"
 HOST = "localhost"
 PASSWORD = "student"
@@ -409,13 +409,13 @@ def view_dashboard(member_id):
                 print("Dashboard Information:")
                 if member_info:
                     print(f"Name: {member_info[0]}\nEmail: {member_info[1]}\nAddress: {member_info[2]}\nPhone Number: {member_info[3]}\nFitness Goals: {member_info[4]}\nHealth Metrics: {member_info[5]}")
-                
+
                 cur.execute("SELECT DeviceType, WorkoutTime, HeartRate, ActiveCalories, Steps FROM WearableDevice WHERE MemberID = %s", (member_id,))
                 device_info = cur.fetchall()
                 print("\nWearable Device Data:")
                 for device in device_info:
                     print(f"Device Type: {device[0]}, Workout Time: {device[1]}, Heart Rate: {device[2]}, Active Calories: {device[3]}, Steps: {device[4]}")
-                
+
                 cur.execute("SELECT fc.ClassName, fc.Schedule FROM FitnessClasses fc JOIN PersonalTrainingSession pts ON fc.Schedule = pts.Schedule WHERE pts.MemberID = %s", (member_id,))
                 classes = cur.fetchall()
                 print("\nCurrent Group Fitness Classes:")
@@ -424,8 +424,8 @@ def view_dashboard(member_id):
 
                 cur.execute("""
                     SELECT pts.Schedule, t.Name AS TrainerName, t.Specialization
-                    FROM PersonalTrainingSession pts 
-                    JOIN Trainers t ON pts.TrainerID = t.TrainerID 
+                    FROM PersonalTrainingSession pts
+                    JOIN Trainers t ON pts.TrainerID = t.TrainerID
                     WHERE pts.MemberID = %s
                 """, (member_id,))
                 sessions = cur.fetchall()
@@ -434,7 +434,7 @@ def view_dashboard(member_id):
                     print(f"Schedule: {session[0]}, Trainer Name: {session[1]}, Specialization: {session[2]}")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
-        
+
 def show_available_trainers():
     try:
         with establish_connection() as conn:
@@ -540,35 +540,33 @@ def room_booking_management():
                 # Check if the room is available
                 cur.execute("SELECT BookingTime FROM RoomBookings WHERE RoomID = %s", (room_id,))
                 existing_bookings = cur.fetchall()
+                existing_bookings = [booking[0].strftime("%Y-%m-%d %H:%M:%S") for booking in existing_bookings]  # Format times for comparison
+
                 if existing_bookings:
                     print("The room is booked at the following times:")
                     for booking in existing_bookings:
-                        print(booking[0])
+                        print(booking)
 
-                    print("Do you want to delete or update a booking? (delete/update/no)")
-                    choice = input()
-                    if choice.lower() == 'delete':
-                        booking_time = input("Enter the booking time to delete (YYYY-MM-DD HH:MM:SS): ")
-                        if (booking_time,) in existing_bookings:
-                            cur.execute("DELETE FROM RoomBookings WHERE RoomID = %s AND BookingTime = %s", (room_id, booking_time))
-                            conn.commit()
-                            print("Booking deleted successfully!")
-                        else:
-                            print("That booking time does not exist.")
-                    elif choice.lower() == 'update':
-                        old_booking_time = input("Enter the old booking time (YYYY-MM-DD HH:MM:SS): ")
-                        if (old_booking_time,) in existing_bookings:
-                            new_booking_time = input("Enter the new booking time (YYYY-MM-DD HH:MM:SS): ")
-                            cur.execute("UPDATE RoomBookings SET BookingTime = %s WHERE RoomID = %s AND BookingTime = %s", (new_booking_time, room_id, old_booking_time))
-                            conn.commit()
-                            print("Booking updated successfully!")
+                    action = input("Do you want to delete or update a booking? (delete/update/no): ").lower()
+                    if action == 'delete' or action == 'update':
+                        booking_time = input("Enter the booking time (YYYY-MM-DD HH:MM:SS): ")
+                        if booking_time in existing_bookings:
+                            if action == 'delete':
+                                cur.execute("DELETE FROM RoomBookings WHERE RoomID = %s AND BookingTime = %s", (room_id, booking_time))
+                                conn.commit()
+                                print("Booking deleted successfully!")
+                            elif action == 'update':
+                                new_booking_time = input("Enter the new booking time (YYYY-MM-DD HH:MM:SS): ")
+                                cur.execute("UPDATE RoomBookings SET BookingTime = %s WHERE RoomID = %s AND BookingTime = %s", (new_booking_time, room_id, booking_time))
+                                conn.commit()
+                                print("Booking updated successfully!")
                         else:
                             print("That booking time does not exist.")
                 else:
                     print("The room is not booked at any time.")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
-
+        
 def list_equipment():
    try:
        with establish_connection() as conn:
@@ -625,7 +623,7 @@ def list_billing_information():
         with establish_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT b.BillID, b.MemberID, m.Name, b.StaffID, b.Amount, b.BillDate, b.Status 
+                    SELECT b.BillID, b.MemberID, m.Name, b.StaffID, b.Amount, b.BillDate, b.Status
                     FROM Billing b
                     JOIN Members m ON b.MemberID = m.MemberID
                     ORDER BY b.BillID
