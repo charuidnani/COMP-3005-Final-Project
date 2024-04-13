@@ -123,3 +123,35 @@ CREATE TABLE FitnessAchievements (
     FOREIGN KEY (MemberID) REFERENCES Members(MemberID)
 );
 
+CREATE OR REPLACE FUNCTION check_room_booking() RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM RoomBookings WHERE RoomID = NEW.RoomID AND BookingTime = NEW.BookingTime) THEN
+        RAISE EXCEPTION 'Room is already booked at the specified time.';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER room_booking_trigger
+BEFORE INSERT ON RoomBookings
+FOR EACH ROW EXECUTE FUNCTION check_room_booking();
+
+CREATE OR REPLACE FUNCTION update_trainer_id()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.BookedByTrainer THEN
+        NEW.TrainerID = (SELECT TrainerID FROM TrainerAvailability WHERE StartTime <= NEW.Schedule AND EndTime > NEW.Schedule LIMIT 1);
+    ELSE
+        NEW.TrainerID = NULL;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_trainer_id_trigger
+BEFORE INSERT OR UPDATE ON FitnessClasses
+FOR EACH ROW EXECUTE FUNCTION update_trainer_id();
+
+CREATE INDEX idx_email ON Members(Email);
+CREATE INDEX idx_trainer_specialization ON Trainers(Specialization);
+CREATE INDEX idx_scheduling ON FitnessClasses(Schedule);
