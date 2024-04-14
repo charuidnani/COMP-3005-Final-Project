@@ -416,12 +416,6 @@ def view_dashboard(member_id):
                 for device in device_info:
                     print(f"Device Type: {device[0]}, Workout Time: {device[1]}, Heart Rate: {device[2]}, Active Calories: {device[3]}, Steps: {device[4]}")
 
-                cur.execute("SELECT fc.ClassName, fc.Schedule FROM FitnessClasses fc JOIN PersonalTrainingSession pts ON fc.Schedule = pts.Schedule WHERE pts.MemberID = %s", (member_id,))
-                classes = cur.fetchall()
-                print("\nCurrent Group Fitness Classes:")
-                for class_ in classes:
-                    print(f"Class Name: {class_[0]}, Schedule: {class_[1]}")
-
                 cur.execute("""
                     SELECT pts.Schedule, t.Name AS TrainerName, t.Specialization
                     FROM PersonalTrainingSession pts
@@ -566,7 +560,7 @@ def room_booking_management():
                     print("The room is not booked at any time.")
     except psycopg.DatabaseError as e:
         print(f"Error while accessing the database: {e}")
-        
+
 def list_equipment():
    try:
        with establish_connection() as conn:

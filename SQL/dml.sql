@@ -41,9 +41,6 @@ INSERT INTO PersonalTrainingSession (Schedule, MemberID, TrainerID) VALUES
 ('2024-04-12 10:00:00', 3, 3),
 ('2024-04-12 15:00:00', 4, 4);
 
-
-
-
 INSERT INTO RoomBookings (RoomID, BookingTime, TrainerID, BookingReason) VALUES
 (1, '2024-04-11 12:00:00', 1, 'Weightlifting Session'),
 (2, '2024-04-11 17:00:00', 2, 'Cardio Training'),
